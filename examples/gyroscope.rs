@@ -14,13 +14,18 @@ use embedded_graphics::{
     pixelcolor::Rgb565,
     prelude::*,
     primitives::{Circle, PrimitiveStyleBuilder},
+    text::Baseline,
     text::Text,
 };
 use fugit::RateExtU32;
 use rp_pico as bsp;
 
+use rp2040_with_lcd_128::qmi8658c;
+
 #[rp2040_hal::entry]
 fn main() -> ! {
+    let screen_width = 240;
+    let screen_height = 240;
     let mut peripherals = pac::Peripherals::take().unwrap();
     let core = pac::CorePeripherals::take().unwrap();
     let mut watchdog = Watchdog::new(peripherals.WATCHDOG);
@@ -91,7 +96,7 @@ fn main() -> ! {
 
     let circle_style = PrimitiveStyleBuilder::new()
         .stroke_width(2)
-        .stroke_color(Rgb565::CSS_RED)
+        .stroke_color(Rgb565::CSS_AQUAMARINE)
         .build();
 
     // screen outline for the round 1.28 inch Waveshare display
@@ -101,16 +106,21 @@ fn main() -> ! {
         .unwrap();
 
     let text_style = MonoTextStyle::new(&FONT_6X10, Rgb565::WHITE);
+
     loop {
-        Text::new("Hello Rust!", Point::new(120, 120), text_style)
-            .draw(&mut display)
-            .unwrap();
+        let mut text = Text::new(
+            "Hello Rust!Hello Rust!Hello Rust!",
+            Point::new(0, 0),
+            text_style,
+        );
 
-        Circle::new(Point::new(30, 30), 100)
-            .into_styled(circle_style)
-            .draw(&mut display)
-            .unwrap();
+        let text_size = text.bounding_box().size;
+        text.position = Point::new(
+            (screen_width / 2) - (text_size.width as i32 / 2),
+            (screen_height / 2) + (text_size.height as i32 / 2),
+        );
 
+        text.draw(&mut display).unwrap();
         delay.delay_ms(500);
     }
 }
